@@ -1,0 +1,2 @@
+# Built by: cd platform-web && npm run build:embed
+# Served at: GET /embed/webchat.js

@@ -1,0 +1,38 @@
+{
+  "model": "tfidf_word_char_logreg",
+  "taxonomy": "group/sub",
+  "groups": [
+    "pre_purchase",
+    "order",
+    "post_purchase",
+    "noise"
+  ],
+  "intents": [
+    "pre_purchase/product",
+    "pre_purchase/price",
+    "pre_purchase/shipping",
+    "pre_purchase/other",
+    "order/status",
+    "order/change",
+    "order/payment",
+    "order/other",
+    "post_purchase/delivery",
+    "post_purchase/return",
+    "post_purchase/feedback",
+    "post_purchase/other",
+    "noise/thanks",
+    "noise/greeting",
+    "noise/human",
+    "noise/spam"
+  ],
+  "train_rows": 11128,
+  "test_rows": 1964,
+  "report": "                        precision    recall  f1-score   support\n\n        noise/greeting      1.000     1.000     1.000        10\n           noise/human      1.000     1.000     1.000       127\n            noise/spam      1.000     1.000     1.000        49\n          noise/thanks      1.000     1.000     1.000        19\n          order/change      1.000     1.000     1.000       156\n           order/other      1.000     1.000     1.000         4\n         order/payment      1.000     0.994     0.997       156\n          order/status      0.994     0.982     0.988       164\npost_purchase/delivery      0.972     0.995     0.984       212\npost_purchase/feedback      1.000     1.000     1.000       128\n   post_purchase/other      1.000     1.000     1.000       125\n  post_purchase/return      1.000     0.995     0.998       210\n    pre_purchase/other      1.000     1.000     1.000       126\n    pre_purchase/price      1.000     1.000     1.000       159\n  pre_purchase/product      1.000     0.995     0.997       191\n pre_purchase/shipping      1.000     1.000     1.000       128\n\n              accuracy                          0.996      1964\n             macro avg      0.998     0.998     0.998      1964\n          weighted avg      0.996     0.996     0.996      1964\n",
+  "group_report": "               precision    recall  f1-score   support\n\n pre_purchase      1.000     0.998     0.999       604\n        order      0.998     0.992     0.995       480\npost_purchase      0.993     0.999     0.996       675\n        noise      1.000     1.000     1.000       205\n\n     accuracy                          0.997      1964\n    macro avg      0.998     0.997     0.997      1964\n weighted avg      0.997     0.997     0.997      1964\n",
+  "note": "Classic ML (word+char TF-IDF) for English + Hinglish \u2014 not an LLM.",
+  "languages": [
+    "en",
+    "hi-Latn",
+    "hinglish"
+  ]
+}

@@ -1,0 +1,35 @@
+---
+description: Agentic skills must only use read-only Shopify/commerce tools — never write, update, cancel, refund, or mutate store data.
+alwaysApply: true
+---
+
+# Agentic skills — Shopify read-only only
+
+When working on CEP agent skills, tools, orchestrator, LLM prompts, or admin skill toggles:
+
+## Hard rule
+
+**Skills and their tools may only READ data.** Never add or call Shopify (or other commerce) APIs that create, update, delete, cancel, fulfill, refund, capture, void, or otherwise mutate store/customer/order state.
+
+### Allowed (examples)
+
+- `getCustomer`, `getOrders`, `getRecentOrder`, `getOrderById`
+- Read fulfillments / tracking / invoice **URLs** if the API is GET-only
+- Read products / collections (GET)
+
+### Forbidden (examples)
+
+- Create/update/delete customers, orders, drafts, fulfillments
+- Cancel order, refund, capture payment, void transaction
+- Update inventory, tags, notes, metafields (writes)
+- Any Admin GraphQL/REST mutation or `POST`/`PUT`/`PATCH`/`DELETE` to Shopify for skill tools
+
+If a customer asks for a change (cancel, address change, return RMA create), the skill must **explain / escalate to a human** — not perform the change.
+
+## Where skills live
+
+- Premade catalog: `client/platform-api/src/services/skills/catalog.ts`
+- Tool gatherers: `client/platform-api/src/services/skills/tools.ts`
+- Docs / roadmap: `client/platform-api/src/services/skills/README.md`
+
+Prefer extending the premade catalog + feature flags over free-form tenant-edited skill code.

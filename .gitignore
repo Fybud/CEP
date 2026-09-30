@@ -1,0 +1,26 @@
+node_modules
+dist
+build
+.env
+.env.*
+!.env.example
+.env.local
+seed.creds.json
+client/platform-api/seed.creds.json
+**/seed.creds.json
+*.log
+.DS_Store
+coverage
+.turbo
+.vite
+*.tsbuildinfo
+client/platform-api/dist
+client/platform-api/src/generated
+client/platform-web/dist
+packages/channels/dist
+
+# Local admin tools
+
+# Large local model weights — keep off GitHub (use Hub/S3 in prod)
+intent-classifier-distilbert/bundled_model/
+*.safetensors

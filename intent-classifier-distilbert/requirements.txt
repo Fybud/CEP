@@ -1,0 +1,15 @@
+transformers>=4.48.0,<5
+# Install CUDA torch separately on Windows GPU machines, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128
+torch>=2.6.0
+accelerate>=1.2.0
+scikit-learn>=1.5.0
+pandas>=2.2.0
+numpy>=2.0.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.10.0
+httpx>=0.28.0
+python-dotenv>=1.0.0
+safetensors>=0.5.0
+sentencepiece>=0.2.0

@@ -1,0 +1,35 @@
+﻿name: cep-demo
+
+services:
+  platform-api:
+    build:
+      context: ./platform-api
+      dockerfile: Dockerfile
+    env_file:
+      - ./platform-api/.env.demo
+    environment:
+      # Shared classifier on cep-network (run separately from intent-classifier/)
+      INTENT_CLASSIFIER_URL: http://intent-classifier:8091
+    ports:
+      - "4101:4100"
+    networks:
+      - cep-network
+
+  platform-web:
+    build:
+      context: ./platform-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: https://api.cep-demo.fybud.com
+    env_file:
+      - ./platform-web/.env.demo
+    ports:
+      - "9001:5173"
+    depends_on:
+      - platform-api
+    networks:
+      - cep-network
+
+networks:
+  cep-network:
+    external: true

@@ -1,0 +1,104 @@
+name: build-push
+
+# Build all CEP images on GitHub-hosted runners, push to Docker Hub,
+# then notify FiberAI Deploy to redeploy approved tenants.
+# The VPS never builds images.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOCKERHUB_ORG: fiberai
+  TOOL: cep
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            image: cep-api
+            context: client/platform-api
+            dockerfile: client/platform-api/Dockerfile
+          - name: web
+            image: cep-web
+            context: client/platform-web
+            dockerfile: client/platform-web/Dockerfile
+          - name: admin-api
+            image: cep-admin-api
+            context: .
+            dockerfile: admin/platform-admin-api/Dockerfile
+          - name: admin-web
+            image: cep-admin
+            context: admin/platform-admin
+            dockerfile: admin/platform-admin/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: tag
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_ORG }}/${{ matrix.image }}:${{ steps.tag.outputs.tag }}
+            ${{ env.DOCKERHUB_ORG }}/${{ matrix.image }}:latest
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+  notify:
+    needs: build
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify FiberAI Deploy
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+          DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message || github.event_name }}
+          COMMIT_AUTHOR: ${{ github.event.head_commit.author.name || github.actor }}
+          COMMITTED_AT: ${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$DEPLOY_WEBHOOK_URL" ]; then
+            echo "DEPLOY_WEBHOOK_URL not set — skipping notify"
+            exit 0
+          fi
+          TAG="sha-${COMMIT_SHA::7}"
+          PUSHED_AT="${COMMITTED_AT:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
+          payload=$(jq -n \
+            --arg tool "$TOOL" \
+            --arg tag "$TAG" \
+            --arg repo "$REPO" \
+            --arg commit "$COMMIT_SHA" \
+            --arg commitMessage "$COMMIT_MSG" \
+            --arg commitAuthor "$COMMIT_AUTHOR" \
+            --arg pushedAt "$PUSHED_AT" \
+            --arg api "${DOCKERHUB_ORG}/cep-api:${TAG}" \
+            --arg web "${DOCKERHUB_ORG}/cep-web:${TAG}" \
+            --arg adminApi "${DOCKERHUB_ORG}/cep-admin-api:${TAG}" \
+            --arg adminWeb "${DOCKERHUB_ORG}/cep-admin:${TAG}" \
+            '{tool:$tool,tag:$tag,repo:$repo,commit:$commit,commitMessage:$commitMessage,commitAuthor:$commitAuthor,pushedAt:$pushedAt,images:{api:$api,web:$web,adminApi:$adminApi,adminWeb:$adminWeb}}')
+          echo "$payload"
+          curl -sf -X POST "$DEPLOY_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-Deploy-Secret: $DEPLOY_WEBHOOK_SECRET" \
+            -d "$payload"

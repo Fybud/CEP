@@ -1,0 +1,32 @@
+# DistilBERT intent classifier — SAME port 8091 as LogReg service.
+# Run ONLY one of: intent-classifier/ OR intent-classifier-distilbert/
+#   cd intent-classifier-distilbert && docker compose up -d --build
+services:
+  intent-classifier:
+    build: .
+    container_name: intent-classifier
+    ports:
+      - "8091:8091"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8091"
+      INTENT_MODEL_PATH: /app/models
+    restart: unless-stopped
+    networks:
+      - cep-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  cep-network:
+    external: true
