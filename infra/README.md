@@ -1,10 +1,10 @@
-# CEP client stacks (FiberAI Deploy)
+# CEP client stacks (fybud Deploy)
 
 Image-only Compose. **No admin here** — see [Fybud/CEP-Admin](https://github.com/Fybud/CEP-Admin) (demo only).
 
-| Folder | Domains | DB |
-|---|---|---|
-| `demo/` | `cep.fybud.com`, `api.cep.fybud.com` | `cep-demo` |
-| `svasthyaa/` | `cep-svasthyaa.fybud.com`, … | `cep-svasthyaa` |
+| Folder       | Domains                              | DB              |
+| ------------ | ------------------------------------ | --------------- |
+| `demo/`      | `cep.fybud.com`, `api.cep.fybud.com` | `cep-demo`      |
+| `svasthyaa/` | `cep-svasthyaa.fybud.com`, …         | `cep-svasthyaa` |
 
-Deploy writes `.env` at runtime. Actions → `fiberai/cep-api`, `fiberai/cep-web`.
+Deploy writes `.env` at runtime. Actions → `fybud/cep-api`, `fybud/cep-web`.

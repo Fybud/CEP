@@ -367,7 +367,7 @@ const PRIVACY_POLICY_HTML = `<!DOCTYPE html>
   <h2>7. Children’s privacy</h2>
   <p>The service is not directed to children under 13, and we do not knowingly collect personal information from children.</p>
   <h2>8. Contact</h2>
-  <p>Questions about this policy: <strong>fiberai.akesh@gmail.com</strong></p>
+  <p>Questions about this policy: <strong>fybud.akesh@gmail.com</strong></p>
   <h2>9. Changes</h2>
   <p>We may update this Privacy Policy from time to time. The “Last updated” date above will change when we do.</p>
 </body>

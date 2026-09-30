@@ -3,7 +3,7 @@ import { findOrCreateGoogleUser } from "../services/UserService.js";
 import { prisma } from "../config/db.js";
 
 async function main() {
-  const adminEmail = process.env.SUPER_ADMIN_EMAIL || "fiberai.akesh@gmail.com";
+  const adminEmail = process.env.SUPER_ADMIN_EMAIL || "fybud.akesh@gmail.com";
   console.log(`[seed:user] Seeding admin user: ${adminEmail}`);
 
   // Mock a google ID for local dev if they want to seed

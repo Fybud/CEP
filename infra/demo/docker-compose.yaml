@@ -4,7 +4,7 @@ name: cep-demo
 
 services:
   platform-api:
-    image: fiberai/cep-api:${IMAGE_TAG:-latest}
+    image: fybud/cep-api:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file: [.env]
     environment:
@@ -19,7 +19,7 @@ services:
     networks: [fybud-net]
 
   platform-web:
-    image: fiberai/cep-web:${IMAGE_TAG:-latest}
+    image: fybud/cep-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
     env_file: [.env]
     environment:

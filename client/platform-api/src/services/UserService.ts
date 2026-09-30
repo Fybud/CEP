@@ -3,7 +3,7 @@ import { prisma } from "../config/db.js";
 import { env } from "../config/env.js";
 
 export async function findOrCreateGoogleUser(email: string, googleId: string) {
-  const adminEmail = (process.env.SUPER_ADMIN_EMAIL || "fiberai.akesh@gmail.com").toLowerCase();
+  const adminEmail = (process.env.SUPER_ADMIN_EMAIL || "fybud.akesh@gmail.com").toLowerCase();
   const normalizedEmail = email.trim().toLowerCase();
 
   let user = await prisma.user.findUnique({ where: { username: normalizedEmail } });
