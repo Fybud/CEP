@@ -1,8 +1,6 @@
-# CEP — demo tenant (image-only).
-# Domains: cep.fybud.com / api.cep.fybud.com (+ admin.*).
-# Shared Postgres: role/DBs cep-demo (+ cep-demo-admin); password is random (set by Deploy).
-# Nginx: infra/demo/nginx/cep.fybud.com.conf (installed on first deploy).
-# Runtime: compose + .env written by FiberAI Deploy (never committed). No build:, no postgres here.
+# CEP client — demo tenant (image-only). Admin is a separate repo (Fybud/CEP-Admin).
+# Domains: cep.fybud.com / api.cep.fybud.com
+# Shared Postgres: role/DB cep-demo (password random, set by Deploy).
 
 name: cep-demo
 
@@ -27,34 +25,11 @@ services:
     restart: unless-stopped
     env_file: [.env]
     environment:
-      # Runtime config injection: container entrypoint writes /env.js from VITE_* vars.
       VITE_API_BASE_URL: ${PLATFORM_API_BASE_URL:?PLATFORM_API_BASE_URL required}
       VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     ports:
       - "127.0.0.1:${WEB_HOST_PORT:-9000}:5173"
     depends_on: [platform-api]
-    networks: [fiberai-net]
-
-  admin-api:
-    image: fiberai/cep-admin-api:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    env_file: [.env]
-    environment:
-      ADMIN_DATABASE_URL: ${ADMIN_DATABASE_URL:?ADMIN_DATABASE_URL required}
-    ports:
-      - "127.0.0.1:${ADMIN_API_HOST_PORT:-4200}:4200"
-    networks: [fiberai-net]
-
-  admin-web:
-    image: fiberai/cep-admin:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    env_file: [.env]
-    environment:
-      VITE_API_BASE_URL: ${ADMIN_API_BASE_URL:?ADMIN_API_BASE_URL required}
-      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-    ports:
-      - "127.0.0.1:${ADMIN_WEB_HOST_PORT:-4201}:5173"
-    depends_on: [admin-api]
     networks: [fiberai-net]
 
 networks:

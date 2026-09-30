@@ -1,12 +1,10 @@
-# CEP tenant stacks (FiberAI Deploy)
+# CEP client stacks (FiberAI Deploy)
 
-Image-only Compose. **No Postgres here** — use the shared VPS Postgres (`fiberai-postgres` on `fiberai-net`).
+Image-only Compose. **No admin here** — see [Fybud/CEP-Admin](https://github.com/Fybud/CEP-Admin) (demo only).
 
-| Folder | Domains | DB role / DBs |
+| Folder | Domains | DB |
 |---|---|---|
-| `demo/` | `cep.fybud.com`, `api.cep.fybud.com`, admin pair | `cep-demo`, `cep-demo-admin` |
-| `svasthyaa/` | `cep-svasthyaa.fybud.com`, … | `cep-svasthyaa`, `cep-svasthyaa-admin` |
+| `demo/` | `cep.fybud.com`, `api.cep.fybud.com` | `cep-demo` |
+| `svasthyaa/` | `cep-svasthyaa.fybud.com`, … | `cep-svasthyaa` |
 
-Deploy writes `.env` at runtime (never commit secrets).
-
-GitHub Actions: `.github/workflows/build-push.yml` → Docker Hub `fiberai/cep-*` → Deploy webhook.
+Deploy writes `.env` at runtime. Actions → `fiberai/cep-api`, `fiberai/cep-web`.
