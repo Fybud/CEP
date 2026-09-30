@@ -1,6 +1,4 @@
-# CEP client — demo tenant (image-only). Admin is a separate repo (Fybud/CEP-Admin).
-# Domains: cep.fybud.com / api.cep.fybud.com
-# Shared Postgres: role/DB cep-demo (password random, set by Deploy).
+﻿# CEP client — demo. Shared Postgres: fybud-postgres on fybud-net (root docker-compose.db.yml).
 
 name: cep-demo
 
@@ -18,7 +16,7 @@ services:
       INTENT_CLASSIFIER_URL: ${INTENT_CLASSIFIER_URL:-http://intent-classifier:8091}
     ports:
       - "127.0.0.1:${API_HOST_PORT:-4100}:4100"
-    networks: [fiberai-net]
+    networks: [fybud-net]
 
   platform-web:
     image: fiberai/cep-web:${IMAGE_TAG:-latest}
@@ -30,8 +28,9 @@ services:
     ports:
       - "127.0.0.1:${WEB_HOST_PORT:-9000}:5173"
     depends_on: [platform-api]
-    networks: [fiberai-net]
+    networks: [fybud-net]
 
 networks:
-  fiberai-net:
+  fybud-net:
+    name: fybud-net
     external: true
