@@ -12,6 +12,13 @@ export interface OrderItem {
   quantity: number;
 }
 
+export interface OrderTrackingInfo {
+  number?: string | null;
+  url?: string | null;
+  company?: string | null;
+  status?: string | null;
+}
+
 export interface CustomerOrder {
   orderId: string;
   status: OrderStatus | string;
@@ -19,6 +26,8 @@ export interface CustomerOrder {
   currency: string;
   date: string; // ISO date YYYY-MM-DD
   items: OrderItem[];
+  /** Fulfillment tracking rows when the provider supplies them. */
+  tracking?: OrderTrackingInfo[];
 }
 
 export interface OrdersResponse {

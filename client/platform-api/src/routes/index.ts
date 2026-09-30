@@ -23,7 +23,8 @@ import { oauthConnectRoutes } from "./v1/oauth-connect.routes.js";
 import { ticketRoutes } from "./v1/ticket.routes.js";
 import { mediaRoutes } from "./v1/media.routes.js";
 import { mediaAssetRoutes } from "./v1/media-assets.routes.js";
-// import { cannedReplyRoutes } from "./v1/canned-replies.routes.js"; // disabled
+import { cannedReplyRoutes } from "./v1/canned-replies.routes.js";
+import { skillRoutes } from "./v1/skills.routes.js";
 import { blockedContactRoutes } from "./v1/blocked-contacts.routes.js";
 import { teamRoutes } from "./v1/teams.routes.js";
 import { userRoutes } from "./v1/users.routes.js";
@@ -126,7 +127,8 @@ export async function registerRoutes(app: FastifyInstance) {
   app.register(ticketRoutes, { prefix: "/api/v1/tickets" });
   app.register(mediaRoutes, { prefix: "/api/v1/media" });
   app.register(mediaAssetRoutes, { prefix: "/api/v1/media-assets" });
-  // app.register(cannedReplyRoutes, { prefix: "/api/v1/canned-replies" }); // disabled
+  app.register(cannedReplyRoutes, { prefix: "/api/v1/canned-replies" });
+  app.register(skillRoutes, { prefix: "/api/v1/skills" });
   app.register(blockedContactRoutes, { prefix: "/api/v1/blocked-contacts" });
   app.register(teamRoutes, { prefix: "/api/v1/teams" });
   app.register(userRoutes, { prefix: "/api/v1/users" });

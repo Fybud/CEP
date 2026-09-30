@@ -1500,10 +1500,97 @@ export const useSearchMessages = (query: string) => {
   });
 };
 
+export type CannedReply = {
+  id: string;
+  name: string;
+  shortcut: string;
+  body: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type AgentSkillStatus = {
+  key: string;
+  name: string;
+  description: string;
+  featureFlag: string;
+  intents: string[];
+  intentGroups: string[];
+  tools: string[];
+  resolveAfter: boolean;
+  resolveOnly: boolean;
+  enabled: boolean;
+};
+
+export type AgentSkillRun = {
+  id: string;
+  skillKey: string;
+  action: string;
+  detail?: string | null;
+  createdAt: string;
+};
+
 export const useCannedReplies = () => {
   return useQuery({
     queryKey: ["cannedReplies"],
-    queryFn: () => request<any[]>(`/api/v1/canned-replies`)
+    queryFn: () => request<CannedReply[]>(`/api/v1/canned-replies`),
+  });
+};
+
+export const useCreateCannedReply = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string; shortcut: string; body: string }) =>
+      request<CannedReply>(`/api/v1/canned-replies`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cannedReplies"] }),
+  });
+};
+
+export const useUpdateCannedReply = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { id: string; name?: string; shortcut?: string; body?: string }) =>
+      request<CannedReply>(`/api/v1/canned-replies/${data.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: data.name,
+          shortcut: data.shortcut,
+          body: data.body,
+        }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cannedReplies"] }),
+  });
+};
+
+export const useDeleteCannedReply = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      request(`/api/v1/canned-replies/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cannedReplies"] }),
+  });
+};
+
+export const useAgentSkills = () => {
+  return useQuery({
+    queryKey: ["agentSkills"],
+    queryFn: () => request<{ skills: AgentSkillStatus[] }>(`/api/v1/skills`),
+  });
+};
+
+export const useAgentSkillRuns = (opts?: { limit?: number; skillKey?: string }) => {
+  const limit = opts?.limit ?? 50;
+  const skillKey = opts?.skillKey;
+  const qs = new URLSearchParams();
+  qs.set("limit", String(limit));
+  if (skillKey) qs.set("skillKey", skillKey);
+  return useQuery({
+    queryKey: ["agentSkillRuns", limit, skillKey ?? ""],
+    queryFn: () =>
+      request<{ runs: AgentSkillRun[] }>(`/api/v1/skills/runs?${qs.toString()}`),
   });
 };
 

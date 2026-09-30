@@ -647,3 +647,38 @@ model CannedReply {
 
   @@map("canned_replies")
 }
+
+/// Premade skill audit runs (definitions live in code; tenants toggle feature flags)
+model AgentSkillRun {
+  id          String      @id @default(cuid())
+  skillKey    String      @map("skill_key")
+  channelType ChannelType @map("channel_type")
+  channelId   String      @map("channel_id")
+  customerId  String?     @map("customer_id")
+  intent      String?
+  intentGroup String?     @map("intent_group")
+  confidence  Float?
+  action      String
+  messageId   String?     @map("message_id")
+  detail      String?
+  toolTrace   Json?       @map("tool_trace")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@index([skillKey])
+  @@index([channelType, channelId])
+  @@index([createdAt])
+  @@map("agent_skill_runs")
+}
+
+/// Per-tenant LLM credentials for agentic skill replies
+model LlmConfig {
+  id        String   @id
+  provider  String   @default("openai")
+  apiKey    String   @default("") @map("api_key")
+  baseUrl   String   @default("") @map("base_url")
+  model     String   @default("gpt-4o-mini")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("llm_config")
+}

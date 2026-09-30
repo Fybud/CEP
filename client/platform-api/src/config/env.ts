@@ -68,6 +68,9 @@ export const env = {
   gmailPubsubTopic: optional("GMAIL_PUBSUB_TOPIC"),
   /** Classic ML intent classifier service (not an LLM). Empty = disabled. */
   intentClassifierUrl: optional("INTENT_CLASSIFIER_URL") || "http://127.0.0.1:8091",
+  /** Optional LLM fallback when tenant llm_config has no API key (local/dev). */
+  openaiApiKey: optional("OPENAI_API_KEY"),
+  openaiModel: optional("OPENAI_MODEL") || "gpt-4o-mini",
   MOCK: optional("mock")?.toLowerCase() === "true" || optional("MOCK")?.toLowerCase() === "true",
 };
 

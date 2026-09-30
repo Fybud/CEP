@@ -1023,6 +1023,7 @@ export async function sendCustomerChannelMessage(input: {
   /** Mark outbound as agentic auto-reply (stored on rawPayload). */
   agentic?: boolean;
   agenticIntent?: string;
+  agenticSkillKey?: string;
 }) {
   const channelCfg = await getEnabledChannelConfig(input.channelType);
   if (!channelCfg || !channelCfg.enabled) {
@@ -1239,7 +1240,11 @@ export async function sendCustomerChannelMessage(input: {
       rawPayload: {
         to,
         ...(input.agentic
-          ? { agentic: true, agenticIntent: input.agenticIntent ?? null }
+          ? {
+              agentic: true,
+              agenticIntent: input.agenticIntent ?? null,
+              agenticSkillKey: input.agenticSkillKey ?? null,
+            }
           : {}),
         ...(result.raw && typeof result.raw === "object" ? (result.raw as object) : {}),
       } as Prisma.InputJsonValue,
