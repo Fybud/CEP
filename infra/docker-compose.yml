@@ -1,6 +1,5 @@
-﻿# CEP client — demo. Shared Postgres: fybud-postgres on fybud-net (root docker-compose.db.yml).
-
-name: cep-demo
+# CEP — public web/api only. Host ports injected by Fybud Deploy into ${*_HOST_PORT}.
+name: cep
 
 services:
   platform-api:
@@ -15,7 +14,10 @@ services:
       PLATFORM_MIGRATE_DATABASE_URL: ${PLATFORM_MIGRATE_DATABASE_URL:-${PLATFORM_DATABASE_URL}}
       INTENT_CLASSIFIER_URL: ${INTENT_CLASSIFIER_URL:-http://intent-classifier:8091}
     ports:
-      - "127.0.0.1:${API_HOST_PORT:-4100}:4100"
+      - "127.0.0.1:${API_HOST_PORT}:4100"
+    labels:
+      fybud.expose: "true"
+      fybud.domain: api.cep.fybud.com
     networks: [fybud-net]
 
   platform-web:
@@ -26,7 +28,10 @@ services:
       VITE_API_BASE_URL: ${PLATFORM_API_BASE_URL:?PLATFORM_API_BASE_URL required}
       VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
     ports:
-      - "127.0.0.1:${WEB_HOST_PORT:-9000}:5173"
+      - "127.0.0.1:${WEB_HOST_PORT}:5173"
+    labels:
+      fybud.expose: "true"
+      fybud.domain: cep.fybud.com
     depends_on: [platform-api]
     networks: [fybud-net]
 
