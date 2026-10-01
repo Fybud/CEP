@@ -13,11 +13,27 @@ services:
       GOOGLE_CLIENT_ID:
       GOOGLE_CLIENT_SECRET:
       SUPER_ADMIN_EMAIL:
+      # Optional — present but never "paste me".
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      INTENT_CLASSIFIER_URL: ${INTENT_CLASSIFIER_URL:-http://intent-classifier:8091}
+      MOCK: ${MOCK:-}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID:-}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
+      INSTAGRAM_APP_ID: ${INSTAGRAM_APP_ID:-}
+      INSTAGRAM_APP_SECRET: ${INSTAGRAM_APP_SECRET:-}
+      SHOPIFY_SHOP: ${SHOPIFY_SHOP:-}
+      SHOPIFY_CLIENT_ID: ${SHOPIFY_CLIENT_ID:-}
+      SHOPIFY_CLIENT_SECRET: ${SHOPIFY_CLIENT_SECRET:-}
+      # Deploy-injected — never pasted.
       PLATFORM_API_BASE_URL: ${PLATFORM_API_BASE_URL:?PLATFORM_API_BASE_URL required}
       PLATFORM_WEB_BASE_URL: ${PLATFORM_WEB_BASE_URL:?PLATFORM_WEB_BASE_URL required}
       PLATFORM_DATABASE_URL: ${PLATFORM_DATABASE_URL:?PLATFORM_DATABASE_URL required}
       PLATFORM_MIGRATE_DATABASE_URL: ${PLATFORM_MIGRATE_DATABASE_URL:-${PLATFORM_DATABASE_URL}}
-      INTENT_CLASSIFIER_URL: ${INTENT_CLASSIFIER_URL:-http://intent-classifier:8091}
     volumes:
       - uploads:/app/uploads
     ports:
@@ -25,9 +41,10 @@ services:
     labels:
       fybud.expose: "true"
       fybud.domain: api.cep.fybud.com
+      fybud.role: api
       fybud.health: "/health"
     healthcheck:
-      # bookworm-slim has no wget/curl — probe with the bundled Node runtime (node:20 ships fetch).
+      # bookworm-slim has no wget/curl — probe with the bundled Node runtime.
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.status<400?0:1)).catch(()=>process.exit(1))\""]
       interval: 15s
       timeout: 5s
@@ -47,16 +64,16 @@ services:
     labels:
       fybud.expose: "true"
       fybud.domain: cep.fybud.com
+      fybud.role: web
       fybud.health: "/"
     depends_on: [platform-api]
     networks: [internal]
-
 
   intent-classifier:
     image: fybud/cep-intent-classifier:${IMAGE_TAG:-latest}
     restart: unless-stopped
     healthcheck:
-      # python:3.13-slim — no wget/curl in the image, so probe with the bundled runtime.
+      # python:3.13-slim — no wget/curl; probe with the bundled runtime.
       test: ["CMD", "python", "-c", "import socket;socket.create_connection(('127.0.0.1',8091),2).close()"]
       interval: 15s
       timeout: 5s
