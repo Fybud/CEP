@@ -51,9 +51,7 @@ services:
     depends_on: [platform-api]
     networks: [internal]
 
-  # Private sidecar (intent classification). NO ports: and NO fybud.* labels — it is
-  # reachable only inside the project-local `internal` network, which platform-api also
-  # joins, so the default `INTENT_CLASSIFIER_URL=http://intent-classifier:8091` resolves.
+
   intent-classifier:
     image: fybud/cep-intent-classifier:${IMAGE_TAG:-latest}
     restart: unless-stopped
