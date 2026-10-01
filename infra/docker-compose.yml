@@ -13,12 +13,22 @@ services:
       PLATFORM_DATABASE_URL: ${PLATFORM_DATABASE_URL:?PLATFORM_DATABASE_URL required}
       PLATFORM_MIGRATE_DATABASE_URL: ${PLATFORM_MIGRATE_DATABASE_URL:-${PLATFORM_DATABASE_URL}}
       INTENT_CLASSIFIER_URL: ${INTENT_CLASSIFIER_URL:-http://intent-classifier:8091}
+    volumes:
+      - uploads:/app/uploads
     ports:
       - "127.0.0.1:${API_HOST_PORT}:4100"
     labels:
       fybud.expose: "true"
       fybud.domain: api.cep.fybud.com
-    networks: [fybud-net]
+      fybud.health: "/health"
+    healthcheck:
+      # bookworm-slim has no wget/curl — probe with the bundled Node runtime (node:20 ships fetch).
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.status<400?0:1)).catch(()=>process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks: [fybud-net, internal]
 
   platform-web:
     image: fybud/cep-web:${IMAGE_TAG:-latest}
@@ -32,10 +42,16 @@ services:
     labels:
       fybud.expose: "true"
       fybud.domain: cep.fybud.com
+      fybud.health: "/"
     depends_on: [platform-api]
-    networks: [fybud-net]
+    networks: [internal]
+
+volumes:
+  uploads:
 
 networks:
   fybud-net:
     name: fybud-net
     external: true
+  internal:
+    driver: bridge
