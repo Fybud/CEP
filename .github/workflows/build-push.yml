@@ -34,6 +34,10 @@ jobs:
             image: cep-web
             context: client/platform-web
             dockerfile: client/platform-web/Dockerfile
+          - name: classifier
+            image: cep-intent-classifier
+            context: intent-classifier
+            dockerfile: intent-classifier/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -90,7 +94,8 @@ jobs:
             --arg pushedAt "$PUSHED_AT" \
             --arg api "${DOCKERHUB_ORG}/cep-api:${TAG}" \
             --arg web "${DOCKERHUB_ORG}/cep-web:${TAG}" \
-            '{tool:$tool,tag:$tag,repo:$repo,commit:$commit,commitMessage:$commitMessage,commitAuthor:$commitAuthor,pushedAt:$pushedAt,images:{api:$api,web:$web}}')
+            --arg classifier "${DOCKERHUB_ORG}/cep-intent-classifier:${TAG}" \
+            '{tool:$tool,tag:$tag,repo:$repo,commit:$commit,commitMessage:$commitMessage,commitAuthor:$commitAuthor,pushedAt:$pushedAt,images:{api:$api,web:$web,classifier:$classifier}}')
           echo "$payload"
           curl -sf -X POST "$DEPLOY_WEBHOOK_URL" \
             -H "Content-Type: application/json" \

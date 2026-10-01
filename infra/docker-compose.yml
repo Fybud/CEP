@@ -8,6 +8,11 @@ services:
     env_file: [.env]
     environment:
       PLATFORM_PORT: 4100
+      # Paste in the Deploy UI (Settings → Tool specs → requiredEnv): empty value = "needs pasting".
+      JWT_SECRET:
+      GOOGLE_CLIENT_ID:
+      GOOGLE_CLIENT_SECRET:
+      SUPER_ADMIN_EMAIL:
       PLATFORM_API_BASE_URL: ${PLATFORM_API_BASE_URL:?PLATFORM_API_BASE_URL required}
       PLATFORM_WEB_BASE_URL: ${PLATFORM_WEB_BASE_URL:?PLATFORM_WEB_BASE_URL required}
       PLATFORM_DATABASE_URL: ${PLATFORM_DATABASE_URL:?PLATFORM_DATABASE_URL required}
@@ -44,6 +49,21 @@ services:
       fybud.domain: cep.fybud.com
       fybud.health: "/"
     depends_on: [platform-api]
+    networks: [internal]
+
+  # Private sidecar (intent classification). NO ports: and NO fybud.* labels — it is
+  # reachable only inside the project-local `internal` network, which platform-api also
+  # joins, so the default `INTENT_CLASSIFIER_URL=http://intent-classifier:8091` resolves.
+  intent-classifier:
+    image: fybud/cep-intent-classifier:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    healthcheck:
+      # python:3.13-slim — no wget/curl in the image, so probe with the bundled runtime.
+      test: ["CMD", "python", "-c", "import socket;socket.create_connection(('127.0.0.1',8091),2).close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks: [internal]
 
 volumes:
