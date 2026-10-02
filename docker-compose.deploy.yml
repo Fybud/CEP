@@ -1,4 +1,5 @@
-# CEP — public web/api only. Host ports injected by Fybud Deploy into ${*_HOST_PORT}.
+# CEP — public web/api; intent-classifier private.
+# Host ports injected by Fybud Deploy into ${*_HOST_PORT}.
 name: cep
 
 services:
@@ -20,6 +21,7 @@ services:
       MOCK:
       GMAIL_CLIENT_ID:
       GMAIL_CLIENT_SECRET:
+      GMAIL_PUBSUB_TOPIC:
       WHATSAPP_PHONE_NUMBER_ID:
       WHATSAPP_ACCESS_TOKEN:
       INSTAGRAM_APP_ID:
@@ -27,6 +29,8 @@ services:
       SHOPIFY_SHOP:
       SHOPIFY_CLIENT_ID:
       SHOPIFY_CLIENT_SECRET:
+      OPENAI_API_KEY:
+      OPENAI_MODEL: gpt-4o-mini
       INTENT_CLASSIFIER_URL: http://intent-classifier:8091
       # Deploy-injected — never pasted.
       PLATFORM_API_BASE_URL: ${PLATFORM_API_BASE_URL:?PLATFORM_API_BASE_URL required}
@@ -64,7 +68,7 @@ services:
       fybud.expose: "true"
       fybud.domain: cep.fybud.com
       fybud.role: web
-      fybud.health: "/"
+      fybud.health: "any"
     depends_on: [platform-api]
     networks: [internal]
 
@@ -72,7 +76,6 @@ services:
     image: fybud/cep-intent-classifier:${IMAGE_TAG:-latest}
     restart: unless-stopped
     healthcheck:
-      # python:3.13-slim — no wget/curl; probe with the bundled runtime.
       test: ["CMD", "python", "-c", "import socket;socket.create_connection(('127.0.0.1',8091),2).close()"]
       interval: 15s
       timeout: 5s

@@ -1,0 +1,684 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PLATFORM_DATABASE_URL")
+}
+
+enum ChannelType {
+  whatsapp
+  instagram
+  facebook
+  email
+  web_chat
+}
+
+enum MessageDirection {
+  incoming
+  outgoing
+}
+
+enum MessageStatus {
+  received
+  queued
+  sent
+  delivered
+  failed
+  mocked
+}
+
+enum ContentType {
+  text
+  html
+  image
+  file
+  audio
+  video
+  template
+  unknown
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  AGENT
+}
+
+/// Login users (Google Auth)
+model User {
+  id          String   @id
+  username    String   @unique // We'll map this to their email
+  name        String?
+  googleId    String?  @unique @map("google_id")
+  role        Role     @default(AGENT)
+  teamId      String?  @map("team_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  team         Team?  @relation(fields: [teamId], references: [id])
+  createdBy    User?  @relation("UserCreator", fields: [createdById], references: [id])
+  createdUsers User[] @relation("UserCreator")
+
+  tickets          Ticket[]          @relation("TicketAssignee")
+  ticketsCreated   Ticket[]          @relation("TicketCreator")
+  ticketNotes      TicketNote[]      @relation("TicketNoteAuthor")
+  handoverNotes    HandoverNote[]    @relation("HandoverNoteAuthor")
+  conversationPins ConversationPin[] @relation("ConversationPins")
+
+  // Teams where user is manager
+  managedTeams Team[] @relation("TeamManager")
+
+  @@map("users")
+}
+
+model Team {
+  id           String   @id
+  name         String
+  parentTeamId String?  @map("parent_team_id")
+  managerId    String?  @map("manager_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  parentTeam Team?  @relation("TeamHierarchy", fields: [parentTeamId], references: [id])
+  subTeams   Team[] @relation("TeamHierarchy")
+
+  manager User?    @relation("TeamManager", fields: [managerId], references: [id])
+  members User[]
+  tickets Ticket[]
+
+  @@map("teams")
+}
+
+/// Unified customer (person) across channels
+model Customer {
+  id           String   @id
+  name         String?
+  /// Free-form label used to group contacts for broadcasting (e.g. "vip", "newsletter", "promo")
+  tag          String?
+  /// True only when EVERY channel identity for this customer is resolved
+  resolved     Boolean  @default(false)
+  metadata     Json     @default("{}")
+  /// Free-form key/value custom fields set by agents (light CRM)
+  customFields Json?    @map("custom_fields")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  whatsappIdentities  WhatsAppChannel[]
+  instagramIdentities InstagramChannel[]
+  facebookIdentities  FacebookChannel[]
+  emailIdentities     EmailChannel[]
+  webChatIdentities   WebChatChannel[]
+  tickets             Ticket[]
+  blockedContact      BlockedContact?
+
+  @@index([resolved])
+  @@index([tag])
+  @@map("customers")
+}
+
+/// Provider connection settings (was inboxes)
+model ChannelConfig {
+  id            String      @id
+  name          String
+  channelType   ChannelType @map("channel_type")
+  channelConfig Json        @default("{}") @map("channel_config")
+  enabled       Boolean     @default(true)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  webhookEvents WebhookEvent[]
+
+  @@unique([channelType])
+  @@index([enabled])
+  @@map("channels_config")
+}
+
+/// Singleton Shopify vendor credentials (also editable in Settings)
+model ShopifyConfig {
+  id           String   @id @default("shopify_default")
+  shop         String   @default("")
+  clientId     String   @default("") @map("client_id")
+  clientSecret String   @default("") @map("client_secret")
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("shopify_config")
+}
+
+/// One WhatsApp number / WA id for a customer
+model WhatsAppChannel {
+  id                    String    @id
+  customerId            String    @map("customer_id")
+  externalId            String    @map("external_id")
+  resolved              Boolean   @default(false)
+  lastMessageAt         DateTime? @map("last_message_at")
+  lastCustomerMessageAt DateTime? @map("last_customer_message_at")
+  /// Latest inbound intent leaf from classifier (e.g. order/status)
+  intent                String?   @map("intent")
+  /// Top-level group: pre_purchase | order | post_purchase | noise
+  intentGroup           String?   @map("intent_group")
+  intentConfidence      Float?    @map("intent_confidence")
+  intentUpdatedAt       DateTime? @map("intent_updated_at")
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([externalId])
+  @@index([customerId])
+  @@index([customerId, resolved])
+  @@index([lastMessageAt])
+  @@index([intent])
+  @@index([intentGroup])
+  @@map("whatsapp_channel")
+}
+
+/// One Instagram scoped id for a customer
+model InstagramChannel {
+  id                    String    @id
+  customerId            String    @map("customer_id")
+  externalId            String    @map("external_id")
+  resolved              Boolean   @default(false)
+  lastMessageAt         DateTime? @map("last_message_at")
+  lastCustomerMessageAt DateTime? @map("last_customer_message_at")
+  intent                String?   @map("intent")
+  intentGroup           String?   @map("intent_group")
+  intentConfidence      Float?    @map("intent_confidence")
+  intentUpdatedAt       DateTime? @map("intent_updated_at")
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([externalId])
+  @@index([customerId])
+  @@index([customerId, resolved])
+  @@index([lastMessageAt])
+  @@index([intent])
+  @@index([intentGroup])
+  @@map("instagram_channel")
+}
+
+/// One Facebook Page-scoped ID (PSID) for a customer
+model FacebookChannel {
+  id                    String    @id
+  customerId            String    @map("customer_id")
+  externalId            String    @map("external_id")
+  resolved              Boolean   @default(false)
+  lastMessageAt         DateTime? @map("last_message_at")
+  lastCustomerMessageAt DateTime? @map("last_customer_message_at")
+  intent                String?   @map("intent")
+  intentGroup           String?   @map("intent_group")
+  intentConfidence      Float?    @map("intent_confidence")
+  intentUpdatedAt       DateTime? @map("intent_updated_at")
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([externalId])
+  @@index([customerId])
+  @@index([customerId, resolved])
+  @@index([lastMessageAt])
+  @@index([intent])
+  @@index([intentGroup])
+  @@map("facebook_channel")
+}
+
+/// One email address for a customer
+model EmailChannel {
+  id                    String    @id
+  customerId            String    @map("customer_id")
+  externalId            String    @map("external_id")
+  resolved              Boolean   @default(false)
+  lastMessageAt         DateTime? @map("last_message_at")
+  lastCustomerMessageAt DateTime? @map("last_customer_message_at")
+  intent                String?   @map("intent")
+  intentGroup           String?   @map("intent_group")
+  intentConfidence      Float?    @map("intent_confidence")
+  intentUpdatedAt       DateTime? @map("intent_updated_at")
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([externalId])
+  @@index([customerId])
+  @@index([customerId, resolved])
+  @@index([lastMessageAt])
+  @@index([intent])
+  @@index([intentGroup])
+  @@map("email_channel")
+}
+
+/// One anonymous session identity for a web visitor
+model WebChatChannel {
+  id                    String    @id
+  customerId            String    @map("customer_id")
+  externalId            String    @map("external_id")
+  resolved              Boolean   @default(false)
+  lastMessageAt         DateTime? @map("last_message_at")
+  lastCustomerMessageAt DateTime? @map("last_customer_message_at")
+  intent                String?   @map("intent")
+  intentGroup           String?   @map("intent_group")
+  intentConfidence      Float?    @map("intent_confidence")
+  intentUpdatedAt       DateTime? @map("intent_updated_at")
+  metadata              Json      @default("{}")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([externalId])
+  @@index([customerId])
+  @@index([customerId, resolved])
+  @@index([lastMessageAt])
+  @@index([intent])
+  @@index([intentGroup])
+  @@map("web_chat_channel")
+}
+
+/// Messages hang off a channel identity (channelType + channelId)
+model Message {
+  id               String           @id
+  channelType      ChannelType      @map("channel_type")
+  /// Id of whatsapp_channel / instagram_channel / email_channel row
+  channelId        String           @map("channel_id")
+  customerId       String           @map("customer_id")
+  direction        MessageDirection
+  content          String
+  contentType      ContentType      @default(text) @map("content_type")
+  subject          String?
+  externalId       String?          @map("external_id")
+  /// Gmail thread id (email). Null for WhatsApp / Instagram.
+  externalThreadId String?          @map("external_thread_id")
+  status           MessageStatus    @default(received)
+  rawPayload       Json?            @map("raw_payload")
+  pinned           Boolean          @default(false)
+  /// Agent has opened the thread since this message arrived (incoming only).
+  isRead           Boolean          @default(false) @map("is_read")
+  /// S3 object key for the primary / first media attachment.
+  mediaKey         String?          @map("media_key")
+  mediaMimeType    String?          @map("media_mime_type")
+  mediaFilename    String?          @map("media_filename")
+  /// All stored attachments: [{ mediaKey, mimeType, filename, contentType? }, ...]
+  mediaItems       Json?            @map("media_items")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  /// Emoji reactions: { [emoji]: string[] of userIds/agent names }
+  reactions     Json? @map("reactions")
+  /// Context for quote-reply: { messageId, preview }
+  quotedMessage Json? @map("quoted_message")
+
+  @@unique([channelType, channelId, externalId])
+  @@index([customerId, channelType, isRead, direction])
+  @@index([customerId, createdAt])
+  @@index([channelType, channelId, createdAt])
+  @@index([customerId, channelType])
+  @@index([customerId, channelType, externalThreadId, createdAt])
+  @@map("messages")
+}
+
+model WebhookEvent {
+  id              String      @id
+  channelConfigId String      @map("channel_config_id")
+  channel         ChannelType
+  eventKey        String      @map("event_key")
+  payload         Json
+  processed       Boolean     @default(false)
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  channelConfig ChannelConfig @relation(fields: [channelConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([channelConfigId, eventKey])
+  @@index([channel, createdAt])
+  @@map("webhook_events")
+}
+
+/// Inbound messages the agent removed — Pub/Sub/catch-up must not re-create them.
+model SuppressedInbound {
+  id          String      @id
+  channelType ChannelType @map("channel_type")
+  externalId  String      @map("external_id")
+  customerId  String?     @map("customer_id")
+  reason      String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@unique([channelType, externalId])
+  @@index([customerId])
+  @@map("suppressed_inbounds")
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Ticket {
+  id             String         @id
+  number         Int            @default(autoincrement())
+  orgId          String?        @map("org_id")
+  conversationId String?        @map("conversation_id")
+  subject        String
+  description    String?
+  status         TicketStatus   @default(OPEN)
+  priority       TicketPriority @default(MEDIUM)
+  channel        String?
+  customerId     String?        @map("customer_id")
+
+  assignedTo String? @map("assigned_to")
+  assignee   User?   @relation("TicketAssignee", fields: [assignedTo], references: [id])
+
+  teamId String? @map("team_id")
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  createdBy String? @map("created_by")
+  creator   User?   @relation("TicketCreator", fields: [createdBy], references: [id])
+
+  escalatedToUserId String? @map("escalated_to_user_id")
+  escalatedToTeamId String? @map("escalated_to_team_id")
+
+  resolvedAt DateTime? @map("resolved_at")
+  closedAt   DateTime? @map("closed_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  events TicketEvent[]
+  notes  TicketNote[]
+
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([status])
+  @@index([assignedTo])
+  @@index([teamId])
+  @@index([createdBy])
+  @@index([customerId])
+  @@map("tickets")
+}
+
+enum TicketEventType {
+  CREATED
+  ASSIGNED
+  REASSIGNED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+  TEAM_CHANGED
+  ESCALATED
+  RETURNED
+  NOTE_ADDED
+  REPLIED
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+model TicketEvent {
+  id        String          @id
+  ticketId  String          @map("ticket_id")
+  actorId   String?         @map("actor_id")
+  type      TicketEventType
+  fromValue Json?           @map("from_value")
+  toValue   Json?           @map("to_value")
+  note      String?
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("ticket_events")
+}
+
+model TicketNote {
+  id         String   @id
+  ticketId   String   @map("ticket_id")
+  authorId   String   @map("author_id")
+  body       String
+  isInternal Boolean  @default(true) @map("is_internal")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation("TicketNoteAuthor", fields: [authorId], references: [id])
+
+  @@index([ticketId])
+  @@map("ticket_notes")
+}
+
+model FeatureFlag {
+  key         String   @id
+  enabled     Boolean  @default(false)
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model UserSession {
+  id        String         @id @default(cuid())
+  browser   String?
+  os        String?
+  userName  String?
+  userEmail String?
+  createdAt DateTime       @default(now())
+  events    SessionEvent[]
+}
+
+model SessionEvent {
+  id        String      @id @default(cuid())
+  sessionId String
+  data      Json
+  createdAt DateTime    @default(now())
+  session   UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+enum TemplateStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  PAUSED
+  DISABLED
+  UNKNOWN
+}
+
+model WhatsAppTemplate {
+  id               String         @id @default(cuid())
+  wabaId           String?        @map("waba_id")
+  metaTemplateId   String?        @map("meta_template_id")
+  name             String
+  language         String
+  internalCategory String         @map("internal_category")
+  metaCategory     String         @map("meta_category")
+  status           TemplateStatus @default(PENDING)
+  components       Json           @default("[]")
+  rejectionReason  String?        @map("rejection_reason")
+  qualityScore     String?        @map("quality_score")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  lastSyncedAt     DateTime?      @map("last_synced_at")
+
+  @@unique([name, language])
+  @@map("whatsapp_templates")
+}
+
+model BroadcastJob {
+  id           String    @id @default(cuid())
+  templateId   String    @map("template_id")
+  templateName String    @map("template_name")
+  variables    Json      @default("{}")
+  status       String    @default("pending")
+  total        Int
+  succeeded    Int       @default(0)
+  failed       Int       @default(0)
+  /// Stored customer IDs for background/scheduled processing
+  customerIds  Json      @default("[]") @map("customer_ids")
+  /// Include contacts with any of these tags
+  includeTags  Json      @default("[]") @map("include_tags")
+  /// Exclude contacts with any of these tags
+  excludeTags  Json      @default("[]") @map("exclude_tags")
+  /// If set and in future, the job is deferred until this time
+  scheduledAt  DateTime? @map("scheduled_at")
+  /// Set when a running job is paused
+  pausedAt     DateTime? @map("paused_at")
+  /// Set when a job is cancelled
+  cancelledAt  DateTime? @map("cancelled_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  /// recurrence: 'none' | 'weekly' | 'monthly'
+  recurrence      String  @default("none")
+  suppressionDays Int?    @map("suppression_days")
+  parentJobId     String? @map("parent_job_id")
+
+  recipients BroadcastRecipient[]
+
+  @@map("broadcast_jobs")
+}
+
+model BroadcastRecipient {
+  id           String       @id @default(cuid())
+  jobId        String       @map("job_id")
+  customerId   String       @map("customer_id")
+  customerName String?      @map("customer_name")
+  status       String
+  error        String?
+  messageId    String?      @map("message_id")
+  deliveredAt  DateTime?    @map("delivered_at")
+  readAt       DateTime?    @map("read_at")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  job          BroadcastJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([messageId])
+  @@map("broadcast_recipients")
+}
+
+/// ─── Spam / Block List (per customer, all channels) ──────────────────────────
+
+model BlockedContact {
+  id         String   @id @default(cuid())
+  customerId String   @unique @map("customer_id")
+  reason     String?
+  blockedBy  String?  @map("blocked_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("blocked_contacts")
+}
+
+/// ─── Handover Notes ──────────────────────────────────────────────────────────
+
+model HandoverNote {
+  id             String    @id @default(cuid())
+  conversationId String    @map("conversation_id")
+  authorId       String    @map("author_id")
+  body           String
+  expiresAt      DateTime? @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  author User @relation("HandoverNoteAuthor", fields: [authorId], references: [id])
+
+  @@index([conversationId])
+  @@map("handover_notes")
+}
+
+/// ─── Pin / Star Conversations ────────────────────────────────────────────────
+
+model ConversationPin {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  conversationId String   @map("conversation_id")
+  pinnedAt       DateTime @default(now()) @map("pinned_at")
+
+  user User @relation("ConversationPins", fields: [userId], references: [id])
+
+  @@unique([userId, conversationId])
+  @@map("conversation_pins")
+}
+
+/// ─── Recurring broadcast support ──────────────────────────────────────────────
+/// recurrence: 'none' | 'weekly' | 'monthly'
+// Extended in BroadcastJob above
+
+/// ─── Media Asset Library ───────────────────────────────────────────────────────
+
+model MediaAsset {
+  id         String   @id @default(cuid())
+  name       String
+  url        String
+  mimeType   String   @map("mime_type")
+  size       Int
+  /// userId of the uploader (nullable for system assets)
+  uploadedBy String?  @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("media_assets")
+}
+
+/// ─── Canned Replies ───────────────────────────────────────────────────────────
+
+model CannedReply {
+  id        String   @id @default(cuid())
+  name      String
+  /// Slash shortcut, e.g. "/hello" (without leading slash stored)
+  shortcut  String   @unique
+  /// Reply body with {{tokens}} for variable substitution
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("canned_replies")
+}
+
+/// Premade skill audit runs (definitions live in code; tenants toggle feature flags)
+model AgentSkillRun {
+  id          String      @id @default(cuid())
+  skillKey    String      @map("skill_key")
+  channelType ChannelType @map("channel_type")
+  channelId   String      @map("channel_id")
+  customerId  String?     @map("customer_id")
+  intent      String?
+  intentGroup String?     @map("intent_group")
+  confidence  Float?
+  action      String
+  messageId   String?     @map("message_id")
+  detail      String?
+  toolTrace   Json?       @map("tool_trace")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@index([skillKey])
+  @@index([channelType, channelId])
+  @@index([createdAt])
+  @@map("agent_skill_runs")
+}
+
+/// Per-tenant LLM credentials for agentic skill replies
+model LlmConfig {
+  id        String   @id
+  provider  String   @default("openai")
+  apiKey    String   @default("") @map("api_key")
+  baseUrl   String   @default("") @map("base_url")
+  model     String   @default("gpt-4o-mini")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("llm_config")
+}

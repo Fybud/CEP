@@ -28,12 +28,12 @@ jobs:
         include:
           - name: api
             image: cep-api
-            context: client/platform-api
-            dockerfile: client/platform-api/Dockerfile
+            context: platform-api
+            dockerfile: platform-api/Dockerfile
           - name: web
             image: cep-web
-            context: client/platform-web
-            dockerfile: client/platform-web/Dockerfile
+            context: platform-web
+            dockerfile: platform-web/Dockerfile
           - name: classifier
             image: cep-intent-classifier
             context: intent-classifier

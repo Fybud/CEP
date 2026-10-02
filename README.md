@@ -11,8 +11,8 @@ Deploy: root [`docker-compose.deploy.yml`](./docker-compose.deploy.yml) + [`DEPL
 
 | Image | Built from | Purpose |
 |---|---|---|
-| `fybud/cep-api` | `client/platform-api/Dockerfile` | public API (`:4100`) |
-| `fybud/cep-web` | `client/platform-web/Dockerfile` | public SPA (`:5173`, nginx) |
+| `fybud/cep-api` | `platform-api/Dockerfile` | public API (`:4100`) |
+| `fybud/cep-web` | `platform-web/Dockerfile` | public SPA (`:5173`) |
 | `fybud/cep-intent-classifier` | `intent-classifier/Dockerfile` | private Python sidecar (`:8091`) |
 
 `.github/workflows/build-push.yml` builds all three and notifies Fybud Deploy.

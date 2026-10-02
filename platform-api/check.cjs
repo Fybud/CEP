@@ -1,0 +1,1 @@
+const { PrismaClient } = require('./src/generated/client'); const prisma = new PrismaClient(); prisma.channelConfig.findMany().then(res => console.log(res.map(r => ({ channel: r.channelType, enabled: r.enabled })))).finally(() => prisma.$disconnect());
