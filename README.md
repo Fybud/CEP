@@ -4,7 +4,8 @@ Fybud's customer-engagement product: a public client (platform-api + platform-we
 private intent-classification sidecar. Admin lives in the sibling repo **CEP-Admin**
 (tool `cep-admin`).
 
-Deploy contract: [`AGENTS.md`](./AGENTS.md) (verbatim copy of the workspace playbook).
+Deploy: root [`docker-compose.deploy.yml`](./docker-compose.deploy.yml) + [`DEPLOY.md`](./DEPLOY.md)
+(playbook). Agent rules: [`AGENTS.md`](./AGENTS.md).
 
 ## Images
 
@@ -16,7 +17,7 @@ Deploy contract: [`AGENTS.md`](./AGENTS.md) (verbatim copy of the workspace play
 
 `.github/workflows/build-push.yml` builds all three and notifies Fybud Deploy.
 
-## Deployed stack (`infra/docker-compose.yml`)
+## Deployed stack (`docker-compose.deploy.yml`)
 
 | Service | Domain | Labels |
 |---|---|---|
@@ -30,20 +31,18 @@ Host ports are never hardcoded — Deploy picks free ones and writes `API_HOST_P
 `platform-api` writes uploads to `/app/uploads`, so the compose declares the **`uploads:`**
 named volume (containers are recreated on every deploy).
 
-## Env — what a human pastes once (Deploy UI → Settings → Tool specs)
+## Env — paste every empty key once (Deploy UI → Settings → Tool specs)
 
-`JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SUPER_ADMIN_EMAIL`
+Paste (empty in compose): `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+`SUPER_ADMIN_EMAIL`, `AWS_REGION`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+`MOCK`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `WHATSAPP_PHONE_NUMBER_ID`,
+`WHATSAPP_ACCESS_TOKEN`, `INSTAGRAM_APP_ID`, `INSTAGRAM_APP_SECRET`, `SHOPIFY_SHOP`,
+`SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`.
 
-Optional (paste only if used): `AWS_REGION`, `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`,
-`AWS_SECRET_ACCESS_KEY`, `MOCK`, `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`,
-`WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `INSTAGRAM_APP_ID`,
-`INSTAGRAM_APP_SECRET`, `SHOPIFY_SHOP`, `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`.
+Literal in compose: `INTENT_CLASSIFIER_URL: http://intent-classifier:8091`.
 
 Deploy injects (never paste): `PLATFORM_API_BASE_URL`, `PLATFORM_WEB_BASE_URL`,
 `PLATFORM_DATABASE_URL`, `PLATFORM_MIGRATE_DATABASE_URL`, `IMAGE_TAG`, `*_HOST_PORT`.
-
-`INTENT_CLASSIFIER_URL` defaults to `http://intent-classifier:8091` (the private sidecar above);
-paste a different value only to point at an external classifier.
 
 ## Local development
 
