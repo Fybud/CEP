@@ -32,7 +32,7 @@ services:
       - "127.0.0.1:${API_HOST_PORT}:4100"
     labels:
       fybud.expose: "true"
-      fybud.domain: api.cep.fybud.com
+      fybud.domain: api.cep-demo.fybud.com
       fybud.role: api
       fybud.health: "/health"
     healthcheck:
@@ -54,7 +54,7 @@ services:
       - "127.0.0.1:${WEB_HOST_PORT}:5173"
     labels:
       fybud.expose: "true"
-      fybud.domain: cep.fybud.com
+      fybud.domain: cep-demo.fybud.com
       fybud.role: web
       fybud.health: "any"
     depends_on: [platform-api]
