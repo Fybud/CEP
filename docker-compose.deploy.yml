@@ -1,15 +1,13 @@
 # CEP — public web/api; intent-classifier private.
-# Host ports injected by Fybud Deploy into ${*_HOST_PORT}.
+# Only Deploy-injected: IMAGE_TAG + *_HOST_PORT. Everything else = paste (.env.deploy).
 name: cep
 
 services:
   platform-api:
-    image: fybud/cep-api:${IMAGE_TAG:-latest}
+    image: fybud/cep-api:${IMAGE_TAG:?IMAGE_TAG required}
     restart: unless-stopped
     env_file: [.env]
     environment:
-      PLATFORM_PORT: 4100
-      # Empty = paste in Deploy UI. Literal = fixed here. ${VAR:?…} = Deploy-injected.
       JWT_SECRET:
       GOOGLE_CLIENT_ID:
       GOOGLE_CLIENT_SECRET:
@@ -30,13 +28,13 @@ services:
       SHOPIFY_CLIENT_ID:
       SHOPIFY_CLIENT_SECRET:
       OPENAI_API_KEY:
-      OPENAI_MODEL: gpt-4o-mini
-      INTENT_CLASSIFIER_URL: http://intent-classifier:8091
-      # Deploy-injected — never pasted.
-      PLATFORM_API_BASE_URL: ${PLATFORM_API_BASE_URL:?PLATFORM_API_BASE_URL required}
-      PLATFORM_WEB_BASE_URL: ${PLATFORM_WEB_BASE_URL:?PLATFORM_WEB_BASE_URL required}
-      PLATFORM_DATABASE_URL: ${PLATFORM_DATABASE_URL:?PLATFORM_DATABASE_URL required}
-      PLATFORM_MIGRATE_DATABASE_URL: ${PLATFORM_DATABASE_URL:?PLATFORM_DATABASE_URL required}
+      OPENAI_MODEL:
+      INTENT_CLASSIFIER_URL:
+      PLATFORM_PORT:
+      PLATFORM_API_BASE_URL:
+      PLATFORM_WEB_BASE_URL:
+      PLATFORM_DATABASE_URL:
+      PLATFORM_MIGRATE_DATABASE_URL:
     volumes:
       - uploads:/app/uploads
     ports:
@@ -47,7 +45,6 @@ services:
       fybud.role: api
       fybud.health: "/health"
     healthcheck:
-      # bookworm-slim has no wget/curl — probe with the bundled Node runtime.
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.status<400?0:1)).catch(()=>process.exit(1))\""]
       interval: 15s
       timeout: 5s
@@ -56,12 +53,12 @@ services:
     networks: [fybud-net, internal]
 
   platform-web:
-    image: fybud/cep-web:${IMAGE_TAG:-latest}
+    image: fybud/cep-web:${IMAGE_TAG:?IMAGE_TAG required}
     restart: unless-stopped
     env_file: [.env]
     environment:
-      VITE_API_BASE_URL: ${PLATFORM_API_BASE_URL:?PLATFORM_API_BASE_URL required}
-      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID required}
+      VITE_API_BASE_URL:
+      VITE_GOOGLE_CLIENT_ID:
     ports:
       - "127.0.0.1:${WEB_HOST_PORT}:5173"
     labels:
@@ -73,7 +70,7 @@ services:
     networks: [internal]
 
   intent-classifier:
-    image: fybud/cep-intent-classifier:${IMAGE_TAG:-latest}
+    image: fybud/cep-intent-classifier:${IMAGE_TAG:?IMAGE_TAG required}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import socket;socket.create_connection(('127.0.0.1',8091),2).close()"]
