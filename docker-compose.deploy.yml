@@ -1,5 +1,6 @@
 # CEP — public web/api; intent-classifier private.
 # Only Deploy-injected: IMAGE_TAG + *_HOST_PORT. Everything else = paste (.env.deploy).
+# Channel / WhatsApp / Instagram / Shopify credentials are NOT env — paste them in the CEP UI.
 name: cep
 
 services:
@@ -10,27 +11,17 @@ services:
     environment:
       JWT_SECRET:
       GOOGLE_CLIENT_ID:
-      GOOGLE_CLIENT_SECRET:
       SUPER_ADMIN_EMAIL:
       AWS_REGION:
       AWS_S3_BUCKET:
       AWS_ACCESS_KEY_ID:
       AWS_SECRET_ACCESS_KEY:
-      MOCK:
       GMAIL_CLIENT_ID:
       GMAIL_CLIENT_SECRET:
       GMAIL_PUBSUB_TOPIC:
-      WHATSAPP_PHONE_NUMBER_ID:
-      WHATSAPP_ACCESS_TOKEN:
-      INSTAGRAM_APP_ID:
-      INSTAGRAM_APP_SECRET:
-      SHOPIFY_SHOP:
-      SHOPIFY_CLIENT_ID:
-      SHOPIFY_CLIENT_SECRET:
-      OPENAI_API_KEY:
-      OPENAI_MODEL:
-      INTENT_CLASSIFIER_URL:
-      PLATFORM_PORT:
+      MOCK: "false"
+      INTENT_CLASSIFIER_URL: http://intent-classifier:8091
+      PLATFORM_PORT: "4100"
       PLATFORM_API_BASE_URL:
       PLATFORM_WEB_BASE_URL:
       PLATFORM_DATABASE_URL:
