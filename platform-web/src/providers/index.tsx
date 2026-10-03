@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAppStore } from "../store";
 import { Toaster } from "sonner";
+import { googleClientId } from "../lib/runtimeEnv";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ""}>
+    <GoogleOAuthProvider clientId={googleClientId()}>
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster richColors position="top-right" />

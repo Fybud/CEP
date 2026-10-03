@@ -1,6 +1,5 @@
 import { useAuthStore } from "../store/auth";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+import { apiBaseUrl } from "../lib/runtimeEnv";
 
 export interface OrderItem {
   name: string;
@@ -58,7 +57,7 @@ export interface CustomerCommerceResponse {
 
 async function requestJson<T>(path: string): Promise<T> {
   const token = useAuthStore.getState().token;
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${apiBaseUrl()}${path}`, {
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -1,11 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth";
+import { apiBaseUrl } from "../lib/runtimeEnv";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+/** Call-time so Deploy-injected `window.__ENV__` wins over empty build-time Vite values. */
+function API_BASE(): string {
+  return apiBaseUrl();
+}
 
 /** Public PDF served by platform-api (`GET /docs/channel-setup-guide.pdf`). */
 export function setupGuidePdfUrl(): string {
-  return `${API_BASE.replace(/\/$/, "")}/docs/channel-setup-guide.pdf`;
+  return `${API_BASE().replace(/\/$/, "")}/docs/channel-setup-guide.pdf`;
 }
 
 export class ApiError extends Error {
@@ -24,7 +28,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const hasBody = init?.body != null && init.body !== "";
   const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${API_BASE()}${path}`, {
     ...init,
     headers: {
       // Fastify rejects empty body when Content-Type is application/json
@@ -540,7 +544,7 @@ export const useDisconnectInbox = () => {
 };
 
 export function messageMediaUrl(messageId: string, index = 0): string {
-  const base = `${API_BASE.replace(/\/$/, "")}/api/v1/messages/${encodeURIComponent(messageId)}/media`;
+  const base = `${API_BASE().replace(/\/$/, "")}/api/v1/messages/${encodeURIComponent(messageId)}/media`;
   return index > 0 ? `${base}?index=${index}` : base;
 }
 
@@ -557,7 +561,7 @@ export async function uploadConversationAttachment(
   const form = new FormData();
   form.append("file", file);
   const res = await fetch(
-    `${API_BASE.replace(/\/$/, "")}/api/v1/conversations/${encodeURIComponent(conversationId)}/attachments`,
+    `${API_BASE().replace(/\/$/, "")}/api/v1/conversations/${encodeURIComponent(conversationId)}/attachments`,
     {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -1190,7 +1194,7 @@ export const useUploadMedia = () => {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`${API_BASE}/api/v1/media/upload`, {
+      const response = await fetch(`${API_BASE()}/api/v1/media/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -1832,7 +1836,7 @@ export const useToggleStar = useToggleContactPin;
 export const downloadTranscript = async (conversationId: string) => {
   const token = useAuthStore.getState().token;
   const res = await fetch(
-    `${API_BASE}/api/v1/conversations/${encodeURIComponent(conversationId)}/transcript.pdf`,
+    `${API_BASE()}/api/v1/conversations/${encodeURIComponent(conversationId)}/transcript.pdf`,
     {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     },

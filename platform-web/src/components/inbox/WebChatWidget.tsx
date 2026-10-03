@@ -1,6 +1,5 @@
 import { EmbedWebChat } from "../../embed/EmbedWebChat";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+import { apiBaseUrl } from "../../lib/runtimeEnv";
 
 /**
  * In-app / demo bubble. Production third-party sites should load
@@ -9,7 +8,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 export function WebChatWidget() {
   return (
     <EmbedWebChat
-      apiBase={API_BASE || window.location.origin}
+      apiBase={apiBaseUrl() || window.location.origin}
       title="Live Chat"
       storageKey="cep_web_chat_demo"
     />

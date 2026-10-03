@@ -46,6 +46,10 @@ function resolveApiBase(script: HTMLScriptElement | null, override?: string): st
     }
   }
 
+  // Embed bundle is often built without tenant env; prefer runtime / data-api-base.
+  const runtime = (window as unknown as { __ENV__?: Record<string, string> }).__ENV__?.VITE_API_BASE_URL?.trim();
+  if (runtime) return runtime.replace(/\/$/, "");
+
   const baked = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
   if (baked) return baked.replace(/\/$/, "");
 

@@ -21,6 +21,8 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Deploy paste (VITE_*) → docker-entrypoint → /env.js before the app boots -->
+    <script src="/env.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

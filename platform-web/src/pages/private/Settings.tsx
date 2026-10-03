@@ -21,6 +21,7 @@ import {
   type Inbox,
 } from "../../api";
 import { ConfirmDialog } from "../../components/ui/confirm-dialog";
+import { apiBaseUrl } from "../../lib/runtimeEnv";
 import {
   Download,
   Eye,
@@ -319,8 +320,7 @@ function WebChatSetupModal({ open, onClose }: { open: boolean; onClose: () => vo
 
   const webOrigin =
     typeof window !== "undefined" ? window.location.origin : "https://cep-demo.fybud.com";
-  const apiBase =
-    (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "";
+  const apiBase = apiBaseUrl().replace(/\/$/, "") || "";
   const scriptSrc = `${apiBase || webOrigin}/embed/webchat.js`;
   const snippet = `<script src="${scriptSrc}" async></script>`;
   const hasDomains = domains.length > 0;

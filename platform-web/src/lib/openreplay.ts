@@ -1,11 +1,11 @@
 import Tracker from "@openreplay/tracker";
-
-const projectKey = import.meta.env.VITE_OPENREPLAY_PROJECT_KEY;
-const ingestPoint = import.meta.env.VITE_OPENREPLAY_INGEST_URL;
+import { env } from "./runtimeEnv";
 
 let trackerInstance: Tracker | null = null;
 
 export function startTracker() {
+  const projectKey = env("VITE_OPENREPLAY_PROJECT_KEY");
+  const ingestPoint = env("VITE_OPENREPLAY_INGEST_URL");
   if (!projectKey || trackerInstance) return trackerInstance;
 
   trackerInstance = new Tracker({

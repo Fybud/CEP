@@ -1,6 +1,5 @@
 import { EmbedWebChat } from "../../embed/EmbedWebChat";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+import { apiBaseUrl } from "../../lib/runtimeEnv";
 
 /** Public preview page for the embeddable web chat (`/chat`) — FyBud portfolio look. */
 export function WebChatPage() {
@@ -49,7 +48,7 @@ export function WebChatPage() {
         }
       `}</style>
       <EmbedWebChat
-        apiBase={API_BASE || window.location.origin}
+        apiBase={apiBaseUrl() || window.location.origin}
         title="Chat with us"
         storageKey="cep_web_chat_preview"
       />

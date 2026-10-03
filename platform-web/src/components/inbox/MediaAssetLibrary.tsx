@@ -5,13 +5,12 @@ import { formatBytes } from "../../lib/channel-media";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
 import { cn } from "./utils";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
+import { apiBaseUrl } from "../../lib/runtimeEnv";
 
 function assetSrc(url: string) {
   if (!url) return url;
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `${API_BASE.replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`;
+  return `${apiBaseUrl().replace(/\/$/, "")}${url.startsWith("/") ? url : `/${url}`}`;
 }
 
 interface Props {

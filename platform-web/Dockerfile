@@ -6,18 +6,20 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 FROM deps AS build
-ARG VITE_API_BASE_URL=http://localhost:4100
+# Leave VITE_* empty at build — docker-entrypoint writes /env.js from Deploy paste at runtime.
+ARG VITE_API_BASE_URL=
+ARG VITE_GOOGLE_CLIENT_ID=
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 COPY . .
-# Vite only loads mode-specific files when the matching mode is selected.
-# Use the deployment-specific public settings for this production build.
-RUN if [ -f .env.svasthyaa ]; then cp .env.svasthyaa .env.production.local; fi
 RUN npm run build
 
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build /app/dist ./dist
-RUN npm install -g serve
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN npm install -g serve \
+  && chmod +x /docker-entrypoint.sh \
+  && printf '%s\n' 'window.__ENV__ = window.__ENV__ || {};' > /app/dist/env.js
 EXPOSE 5173
-# serve -s: SPA fallback; real files under /embed/webchat.js are still served
-CMD ["serve", "-s", "dist", "-l", "5173"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

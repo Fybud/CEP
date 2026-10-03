@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTeams, useTeam, useOrgUsers, type UserRole } from "../../api";
 import { useAuthStore } from "../../store/auth";
+import { apiBaseUrl } from "../../lib/runtimeEnv";
 import {
   Building2,
   Plus,
@@ -39,10 +40,8 @@ const ROLE_META: Record<UserRole, { label: string; icon: React.ReactNode; classN
   },
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
-
 async function apiPost(path: string, body: unknown, token: string) {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${apiBaseUrl()}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),

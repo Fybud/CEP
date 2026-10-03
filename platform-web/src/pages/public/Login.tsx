@@ -4,6 +4,7 @@ import { useAuthStore } from "../../store/auth";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { apiBaseUrl } from "../../lib/runtimeEnv";
 
 /**
  * Login always uses real Google OAuth.
@@ -30,7 +31,7 @@ export function LoginPage() {
           throw new Error("Failed to verify Google account. Try again.");
         }
 
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? ""}/api/v1/auth/google`, {
+        const res = await fetch(`${apiBaseUrl()}/api/v1/auth/google`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ credential }),

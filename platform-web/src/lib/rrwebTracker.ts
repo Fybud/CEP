@@ -1,35 +1,36 @@
 import * as rrweb from "rrweb";
+import { useAuthStore } from "../store/auth";
+import { apiBaseUrl } from "./runtimeEnv";
 
 let events: any[] = [];
 let sessionId: string | null = null;
 let flushInFlight = false;
 export let stopRecording: (() => void) | null = null;
 
-const configuredApiBase = (import.meta.env.VITE_API_BASE_URL || "http://localhost:4100").replace(
-  /\/$/,
-  "",
-);
-const API_BASE = configuredApiBase.endsWith("/api/v1")
-  ? configuredApiBase
-  : `${configuredApiBase}/api/v1`;
-
-import { useAuthStore } from "../store/auth";
+function API_BASE(): string | null {
+  const configured = apiBaseUrl().replace(/\/$/, "");
+  if (!configured) return null;
+  return configured.endsWith("/api/v1") ? configured : `${configured}/api/v1`;
+}
 
 export async function startRrwebTracker() {
   if (sessionId) return; // already tracking
 
+  const base = API_BASE();
+  if (!base) return;
+
   try {
     // 0. Check feature flag
-    const featureRes = await fetch(`${API_BASE}/features?key=rrweb`);
+    const featureRes = await fetch(`${base}/features?key=rrweb`);
     if (featureRes.ok) {
       const data = await featureRes.json();
       if (data.enabled === false) return; // Feature is disabled
     }
 
     const user = useAuthStore.getState().user;
-    
+
     // 1. Create a session in the backend
-    const res = await fetch(`${API_BASE}/telemetry/session`, {
+    const res = await fetch(`${base}/telemetry/session`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -39,23 +40,24 @@ export async function startRrwebTracker() {
         userEmail: user?.username,
       }),
     });
-    
+
     if (!res.ok) throw new Error("Could not start telemetry session");
-    
+
     const data = (await res.json()) as { sessionId?: string };
     if (!data.sessionId) throw new Error("Telemetry session did not return an id");
     sessionId = data.sessionId;
 
     // 2. Start recording DOM
-    stopRecording = rrweb.record({
-      emit(event) {
-        events.push(event);
-      },
-    }) || null;
+    stopRecording =
+      rrweb.record({
+        emit(event) {
+          events.push(event);
+        },
+      }) || null;
 
     // 3. Flush events every 10 seconds
     window.setInterval(flushEvents, 10000);
-    
+
     // Fetch requests may be cancelled during navigation; sendBeacon is designed for this case.
     window.addEventListener("pagehide", flushEventsOnExit);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -65,14 +67,15 @@ export async function startRrwebTracker() {
 }
 
 async function flushEvents() {
-  if (!sessionId || events.length === 0 || flushInFlight) return;
+  const base = API_BASE();
+  if (!base || !sessionId || events.length === 0 || flushInFlight) return;
 
   const eventsToSend = [...events];
   events = []; // clear the buffer
   flushInFlight = true;
 
   try {
-    const res = await fetch(`${API_BASE}/telemetry/events`, {
+    const res = await fetch(`${base}/telemetry/events`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -91,11 +94,12 @@ async function flushEvents() {
 }
 
 function flushEventsOnExit() {
-  if (!sessionId || events.length === 0 || !navigator.sendBeacon) return;
+  const base = API_BASE();
+  if (!base || !sessionId || events.length === 0 || !navigator.sendBeacon) return;
 
   const payload = JSON.stringify({ sessionId, events });
   const accepted = navigator.sendBeacon(
-    `${API_BASE}/telemetry/events`,
+    `${base}/telemetry/events`,
     new Blob([payload], { type: "application/json" }),
   );
   if (accepted) events = [];
